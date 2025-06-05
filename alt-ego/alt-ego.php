@@ -11,7 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class Alt_Ego {
-    const OPTION_KEY = 'alt_ego_api_key';
+    const OPTION_KEY  = 'alt_ego_api_key';
+    const PROMPT_KEY  = 'alt_ego_prompt';
     const QUEUE_OPTION = 'alt_ego_queue';
 
     public function __construct() {
@@ -31,12 +32,19 @@ class Alt_Ego {
             <h1>Alt Ego Settings</h1>
             <form method="post" action="options.php">
                 <?php settings_fields( 'alt_ego' ); ?>
-                <table class="form-table">
-                    <tr valign="top">
-                        <th scope="row">OpenAI API Key</th>
-                        <td><input type="text" name="<?php echo self::OPTION_KEY; ?>" value="<?php echo esc_attr( get_option( self::OPTION_KEY ) ); ?>" size="40"></td>
-                    </tr>
-                </table>
+        <table class="form-table">
+            <tr valign="top">
+                <th scope="row">OpenAI API Key</th>
+                <td><input type="text" name="<?php echo self::OPTION_KEY; ?>" value="<?php echo esc_attr( get_option( self::OPTION_KEY ) ); ?>" size="40"></td>
+            </tr>
+            <tr valign="top">
+                <th scope="row">Alt Text Prompt</th>
+                <td>
+                    <textarea name="<?php echo self::PROMPT_KEY; ?>" rows="3" cols="50"><?php echo esc_textarea( get_option( self::PROMPT_KEY, 'Provide a concise alt text for this image.' ) ); ?></textarea>
+                    <p class="description">Prompt used when requesting alt text from OpenAI.</p>
+                </td>
+            </tr>
+        </table>
                 <?php submit_button(); ?>
             </form>
         </div>
@@ -45,6 +53,7 @@ class Alt_Ego {
 
     public function register_settings() {
         register_setting( 'alt_ego', self::OPTION_KEY );
+        register_setting( 'alt_ego', self::PROMPT_KEY );
     }
 
     public function maybe_queue_image( $attachment_id ) {
@@ -78,11 +87,12 @@ class Alt_Ego {
         if ( ! $image_url ) {
             return;
         }
+        $prompt_text = get_option( self::PROMPT_KEY, 'Provide a concise alt text for this image.' );
         $prompt = [
             [
-                'role' => 'user',
+                'role'    => 'user',
                 'content' => [
-                    [ 'type' => 'text', 'text' => 'Provide a concise alt text for this image.' ],
+                    [ 'type' => 'text', 'text' => $prompt_text ],
                     [ 'type' => 'image_url', 'image_url' => [ 'url' => $image_url ] ],
                 ],
             ],
